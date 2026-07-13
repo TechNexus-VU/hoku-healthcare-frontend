@@ -1,0 +1,63 @@
+:root{
+
+    /* Brand */
+    --primary:#1E63C6;
+    --primary-hover:#164FA4;
+    --primary-light:#EAF3FF;
+    
+    --secondary:#B7CF35;
+    --secondary-hover:#9FB92A;
+    --secondary-light:#F6FAD8;
+    
+    /* Background */
+    
+    --background:#FCFCFD;
+    --section:#F7F9FC;
+    --card:#FFFFFF;
+    --footer:#111827;
+    
+    /* Typography */
+    
+    --heading:#1B1B1F;
+    --body:#5F6774;
+    --muted:#8E97A6;
+    --white:#FFFFFF;
+    
+    /* UI */
+    
+    --border:#E7EDF5;
+    
+    --success:#22C55E;
+    --warning:#F59E0B;
+    --danger:#DC2626;
+    --info:#0EA5E9;
+    
+    /* Radius */
+    
+    --radius-sm:8px;
+    --radius-md:12px;
+    --radius-lg:16px;
+    --radius-xl:22px;
+    
+    /* Shadows */
+    
+    --shadow-soft:0 8px 24px rgba(0,0,0,.06);
+    
+    --shadow-card:0 12px 30px rgba(0,0,0,.08);
+    
+    --shadow-button:0 10px 24px rgba(30,99,198,.25);
+    
+    /* Container */
+    
+    --container:1280px;
+    
+    /* Fonts */
+    
+    --heading-font:"Montserrat",sans-serif;
+    --body-font:"Inter",sans-serif;
+    
+    /* Transition */
+    
+    --transition:.3s ease;
+    
+    }
