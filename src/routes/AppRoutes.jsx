@@ -6,6 +6,7 @@ import {
 
 import MainLayout from "@/layouts/MainLayout";
 import DoctorLayout from "@/layouts/DoctorLayout";
+import AdminLayout from "@/layouts/AdminLayout";
 
 import Home from "@/pages/HomePage";
 import Services from "@/pages/ServicesPage";
@@ -18,6 +19,7 @@ import Appointments from "@/pages/doctor/Appointments";
 import PatientHistory from "@/pages/doctor/PatientHistory";
 import Availability from "@/pages/doctor/Availability";
 import Profile from "@/pages/doctor/Profile";
+import Settings from "@/pages/doctor/Settings";
 
 import DoctorLogin from "@/pages/auth/DoctorLogin";
 import DoctorRegister from "@/pages/auth/DoctorRegister";
@@ -26,8 +28,16 @@ import PatientRegister from "@/pages/auth/PatientRegister";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
 
-import AdminDashboardPage from "@/pages/AdminDashboard";
+import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AdminLogin from "@/pages/auth/AdminLogin";
+
+import DoctorManagement from "@/components/admin/dashboard/DoctorManagement";
+import PatientManagement from "@/components/admin/dashboard/PatientManagement";
+import AppointmentManagement from "@/components/admin/dashboard/AppointmentManagement";
+import ServiceManagement from "@/components/admin/dashboard/ServiceManagement";
+import ReminderManagement from "@/components/admin/dashboard/ReminderManagement";
+import ReviewManagement from "@/components/admin/dashboard/ReviewManagement";
+
 import AdminProtectedRoute from "./AdminProtectedRoutes";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
@@ -112,18 +122,53 @@ const AppRoutes = () => {
       <Route element={<AdminProtectedRoute />}>
         <Route
           path="/admin"
-          element={
-            <Navigate
-              to="/admin/dashboard"
-              replace
-            />
-          }
-        />
+          element={<AdminLayout />}
+        >
+          <Route
+            index
+            element={
+              <Navigate
+                to="dashboard"
+                replace
+              />
+            }
+          />
 
-        <Route
-          path="/admin/dashboard"
-          element={<AdminDashboardPage />}
-        />
+          <Route
+            path="dashboard"
+            element={<AdminDashboardPage />}
+          />
+
+          <Route
+            path="doctors"
+            element={<DoctorManagement />}
+          />
+
+          <Route
+            path="patients"
+            element={<PatientManagement />}
+          />
+
+          <Route
+            path="appointments"
+            element={<AppointmentManagement />}
+          />
+
+          <Route
+            path="services"
+            element={<ServiceManagement />}
+          />
+
+          <Route
+            path="reminders"
+            element={<ReminderManagement />}
+          />
+
+          <Route
+            path="reviews"
+            element={<ReviewManagement />}
+          />
+        </Route>
       </Route>
 
       {/* =========================
@@ -178,11 +223,7 @@ const AppRoutes = () => {
 
             <Route
               path="settings"
-              element={
-                <div className="rounded-[28px] border border-border bg-white p-6 shadow-soft">
-                  Settings page coming soon.
-                </div>
-              }
+              element={<Settings />}
             />
           </Route>
         </Route>

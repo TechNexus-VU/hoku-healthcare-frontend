@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from "../../components/doctor/Input";
+import Button from "../../components/doctor/Button";
 
 const initialForm = {
   otp: "",

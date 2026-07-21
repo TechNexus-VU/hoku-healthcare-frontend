@@ -1,128 +1,265 @@
 import { Link } from "react-router-dom";
+
 import hokudoctorpatient from "@/assets/hoku-doctor-patient.png";
+import PageContainer from "@/components/common/PageContainer";
+
+const specialists = [
+  "Child Specialist",
+  "Gynecologist",
+  "Dental Specialist",
+  "Dermatologist",
+];
 
 const Hero = () => {
-  const specialists = [
-    "Child Specialist",
-    "Gynecologist",
-    "Dental Specialist",
-    "Dermatologist",
-  ];
-
   return (
-    <section className="relative isolate overflow-hidden bg-white">
-      <div className="mx-auto grid min-h-[720px] max-w-[1280px] grid-cols-1 px-5 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:px-12">
+    <section className="relative isolate w-full overflow-hidden bg-white">
+      <PageContainer
+        className="
+          grid min-h-[680px] grid-cols-1 items-center
+          gap-8 pb-32 pt-10
+          sm:min-h-[760px] sm:gap-10 sm:pb-36 sm:pt-14
+          lg:min-h-[720px] lg:grid-cols-[0.85fr_1.15fr]
+          lg:gap-5 lg:pb-32 lg:pt-0
+        "
+      >
         {/* Left content */}
-        <div className="relative z-30 order-2 flex items-center pb-32 pt-10 lg:order-1 lg:pb-36 lg:pt-0">
-          <div className="w-full">
+        <div className="relative z-30 order-1 flex items-center lg:min-h-[650px]">
+          <div className="w-full max-w-[570px]">
             {/* Script heading */}
-            <p className="font-script text-[48px] leading-[0.8] text-[var(--heading)] sm:text-[58px] lg:text-[66px]">
+            <p
+              className="
+                font-script text-[44px] leading-[0.85]
+                text-[var(--heading)]
+                sm:text-[56px]
+                lg:text-[64px]
+                xl:text-[68px]
+              "
+            >
               We take
             </p>
 
             {/* Main heading */}
             <h1 className="mt-3 uppercase">
-              <div className="flex flex-wrap items-end gap-x-2 leading-none">
-                <span className="font-heading text-[34px] font-black text-[var(--heading)] sm:text-[42px] lg:text-[46px]">
+              <span className="flex flex-wrap items-end gap-x-2 leading-none">
+                <span
+                  className="
+                    font-heading text-[32px] font-black
+                    text-[var(--heading)]
+                    sm:text-[40px]
+                    lg:text-[44px]
+                    xl:text-[48px]
+                  "
+                >
                   Care
                 </span>
 
-                <span className="font-heading text-[45px] font-black tracking-[-0.04em] text-[var(--primary)] sm:text-[54px] lg:text-[57px]">
+                <span
+                  className="
+                    font-heading text-[42px] font-black
+                    tracking-[-0.04em] text-[var(--primary)]
+                    sm:text-[52px]
+                    lg:text-[55px]
+                    xl:text-[59px]
+                  "
+                >
                   Of Your
                 </span>
-              </div>
+              </span>
 
-              <span className="mt-1 block font-heading text-[68px] font-black leading-[0.82] tracking-[-0.055em] text-[var(--heading)] sm:text-[84px] lg:text-[94px] xl:text-[102px]">
+              <span
+                className="
+                  mt-1 block font-heading text-[64px]
+                  font-black leading-[0.84]
+                  tracking-[-0.055em] text-[var(--heading)]
+                  sm:text-[82px]
+                  lg:text-[91px]
+                  xl:text-[102px]
+                "
+              >
                 Health
               </span>
             </h1>
 
+            {/* Supporting text */}
+            <p
+              className="
+                mt-6 max-w-[520px] font-body text-sm
+                leading-7 text-[var(--body)]
+                sm:text-base
+              "
+            >
+              Compassionate healthcare services designed to support patients
+              and families with professional care at home.
+            </p>
+
             {/* Specialist heading */}
-            <h2 className="mt-6 font-heading text-[21px] font-bold uppercase tracking-[-0.02em] text-[var(--primary)] sm:text-[24px]">
+            <h2
+              className="
+                mt-6 font-heading text-xl font-bold uppercase
+                tracking-[-0.02em] text-[var(--primary)]
+                sm:text-2xl
+              "
+            >
               Our Specialists
             </h2>
 
             {/* Specialists */}
-            <div className="mt-4 grid max-w-[440px] grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div
+              className="
+                mt-4 grid max-w-[480px] grid-cols-1
+                gap-x-7 gap-y-3
+                xs:grid-cols-2 sm:grid-cols-2
+              "
+            >
               {specialists.map((specialist) => (
                 <div
                   key={specialist}
-                  className="flex items-center gap-2 font-body text-[10px] font-semibold uppercase tracking-[0.02em] text-[var(--heading)]"
+                  className="
+                    flex items-center gap-2 font-body
+                    text-[11px] font-semibold uppercase
+                    tracking-[0.02em] text-[var(--heading)]
+                    sm:text-xs
+                  "
                 >
-                  <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[var(--primary)]" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--primary)]" />
 
-                  {specialist}
+                  <span>{specialist}</span>
                 </div>
               ))}
             </div>
 
-            {/* CTA */}
-            <Link
-              to="/register"
-              className="mt-8 inline-flex rounded-[7px] bg-[var(--primary)] px-6 py-3 text-[12px] font-bold uppercase tracking-[0.04em] text-white shadow-[0_6px_15px_rgba(30,99,198,0.28)] transition duration-300 hover:-translate-y-0.5 hover:bg-[var(--primary-hover)]"
-            >
-              Get Started
-            </Link>
+            {/* Actions */}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                to="/patient/register"
+                className="
+                  inline-flex min-h-12 items-center justify-center
+                  rounded-lg bg-[var(--primary)] px-7
+                  text-xs font-bold uppercase tracking-[0.04em]
+                  text-white shadow-[var(--shadow-button)]
+                  transition duration-300
+                  hover:-translate-y-0.5
+                  hover:bg-[var(--primary-hover)]
+                "
+              >
+                Get Started
+              </Link>
+
+              <Link
+                to="/services"
+                className="
+                  inline-flex min-h-12 items-center justify-center
+                  rounded-lg border border-[var(--primary)]
+                  bg-white px-7 text-xs font-bold uppercase
+                  tracking-[0.04em] text-[var(--primary)]
+                  transition duration-300
+                  hover:bg-[var(--primary-light)]
+                "
+              >
+                View Services
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Right visual */}
-        <div className="relative order-1 min-h-[480px] sm:min-h-[570px] lg:order-2 lg:min-h-[720px]">
+        <div
+          className="
+            relative order-2 min-h-[390px]
+            sm:min-h-[500px]
+            lg:min-h-[720px]
+          "
+        >
           {/* Background panel */}
           <div
-            className="absolute inset-x-0 bottom-0 top-0 overflow-hidden rounded-tl-[26px] rounded-br-[150px]
-                       bg-gradient-to-br from-[#F7F9FC] via-[#EFF2F3] to-[#E4E7E5]
-                       lg:left-2 lg:right-[-80px]"
+            className="
+              absolute inset-0 overflow-hidden
+              rounded-tl-[26px] rounded-br-[90px]
+              bg-gradient-to-br
+              from-[#F7F9FC] via-[#EFF2F3] to-[#E4E7E5]
+              sm:rounded-br-[130px]
+              lg:left-2 lg:right-[-48px] lg:rounded-br-[150px]
+              xl:right-[-70px]
+            "
           >
-            {/* Subtle panel lighting */}
+            {/* Panel lighting */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.95),transparent_38%)]" />
 
-            {/* Blue vertical accent */}
-            <div className="absolute left-0 top-0 h-full w-[7px] bg-gradient-to-b from-[var(--primary)] via-[#77A3D7] to-transparent" />
+            {/* Blue accent */}
+            <div
+              className="
+                absolute left-0 top-0 h-full w-1.5
+                bg-gradient-to-b
+                from-[var(--primary)] via-[#77A3D7] to-transparent
+              "
+            />
 
             {/* Health service badge */}
             <div
-              className="absolute left-[9%] right-[-20px] top-6 z-30 flex h-[60px] items-center justify-center
-                         rounded-l-[13px] border border-white/90 bg-white/25
-                         shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
-                         backdrop-blur-[2px]
-                         sm:top-8 lg:left-[10%] lg:top-11"
+              className="
+                absolute left-[8%] right-0 top-5 z-30
+                flex min-h-[52px] items-center justify-center
+                rounded-l-xl border border-white/90
+                bg-white/30 px-4
+                shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]
+                backdrop-blur-sm
+                sm:top-7 sm:min-h-[58px]
+                lg:left-[10%] lg:top-11
+              "
             >
-              <p className="font-heading text-[14px] font-bold uppercase tracking-[0.55em] text-[var(--primary)] sm:text-[17px] lg:text-[19px]">
+              <p
+                className="
+                  text-center font-heading text-xs font-bold
+                  uppercase tracking-[0.28em]
+                  text-[var(--primary)]
+                  sm:text-base sm:tracking-[0.42em]
+                  lg:text-lg lg:tracking-[0.5em]
+                "
+              >
                 Health Service
               </p>
             </div>
 
-            {/* Decorative soft shapes */}
-            <div className="absolute bottom-[15%] left-[10%] h-52 w-52 rounded-full bg-white/30 blur-3xl" />
-            <div className="absolute right-[5%] top-[20%] h-64 w-64 rounded-full bg-white/35 blur-3xl" />
+            {/* Decorative lighting */}
+            <div className="absolute bottom-[12%] left-[8%] h-40 w-40 rounded-full bg-white/35 blur-3xl sm:h-52 sm:w-52" />
+
+            <div className="absolute right-[3%] top-[20%] h-48 w-48 rounded-full bg-white/40 blur-3xl sm:h-64 sm:w-64" />
           </div>
 
-          {/* Doctor and patient */}
+          {/* Doctor and patient image */}
           <img
             src={hokudoctorpatient}
-            alt="Doctor examining an elderly patient"
-            className="absolute bottom-[38px] left-[48%] z-20 h-auto w-[112%] max-w-none
-                       -translate-x-1/2 object-contain object-bottom
-                       sm:bottom-[45px] sm:w-[108%]
-                       lg:bottom-[35px] lg:left-[52%] lg:w-[120%]
-                       xl:left-[51%] xl:w-[116%]"
+            alt="Healthcare professional examining an elderly patient"
+            className="
+              absolute bottom-5 left-1/2 z-20
+              h-auto w-[108%] max-w-none
+              -translate-x-1/2 object-contain object-bottom
+              sm:bottom-7 sm:w-[102%]
+              lg:bottom-8 lg:left-[52%] lg:w-[118%]
+              xl:left-[51%] xl:w-[114%]
+            "
           />
 
-          {/* Soft transition into left section */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[8%] bg-gradient-to-r from-white/45 to-transparent" />
+          {/* Left blending effect */}
+          <div
+            className="
+              pointer-events-none absolute inset-y-0
+              left-0 z-20 hidden w-[9%]
+              bg-gradient-to-r from-white/55 to-transparent
+              lg:block
+            "
+          />
         </div>
-      </div>
+      </PageContainer>
 
-      {/* Curved waves */}
+      {/* Bottom waves */}
       <div className="pointer-events-none absolute bottom-0 left-0 z-40 w-full">
         <svg
           viewBox="0 0 1440 150"
           preserveAspectRatio="none"
-          className="block h-[90px] w-full sm:h-[108px] lg:h-[125px]"
+          className="block h-[78px] w-full sm:h-[105px] lg:h-[125px]"
           aria-hidden="true"
         >
-          {/* Green wave */}
           <path
             d="M0,55 C330,121 695,140 1035,84 C1210,55 1335,23 1440,8
                L1440,39
@@ -131,7 +268,6 @@ const Hero = () => {
             fill="var(--secondary)"
           />
 
-          {/* Blue wave */}
           <path
             d="M0,48 C335,108 695,126 1028,72
                C1200,44 1328,15 1440,3
@@ -141,7 +277,6 @@ const Hero = () => {
             fill="var(--primary)"
           />
 
-          {/* White foreground */}
           <path
             d="M0,68 C320,136 695,156 1035,102
                C1215,73 1335,44 1440,28

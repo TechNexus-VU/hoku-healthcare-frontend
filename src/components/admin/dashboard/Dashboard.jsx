@@ -1,9 +1,11 @@
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
+
+import { motion } from "framer-motion";
 
 import {
   AlertCircle,
@@ -11,7 +13,6 @@ import {
   CalendarCheck,
   Clock,
   LoaderCircle,
-  MoreVertical,
   RefreshCw,
   Star,
   Stethoscope,
@@ -20,27 +21,39 @@ import {
   X,
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
+
 import {
   extractAdminDashboard,
   getAdminDashboard,
 } from "@/services/adminDashboardApi";
 
-const statusStyles = {
-  Pending:
-    "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+const statusConfig = {
+  Pending: {
+    className:
+      "border-amber-200 bg-amber-50 text-[var(--warning)]",
+  },
 
-  Confirmed:
-    "bg-blue-50 text-[#1565C0] ring-1 ring-blue-200",
+  Confirmed: {
+    className:
+      "border-blue-200 bg-[var(--primary-light)] text-[var(--primary)]",
+  },
 
-  Completed:
-    "bg-green-50 text-[#2E7D32] ring-1 ring-green-200",
+  Completed: {
+    className:
+      "border-green-200 bg-green-50 text-[var(--success)]",
+  },
 
-  Cancelled:
-    "bg-red-50 text-[#DC2626] ring-1 ring-red-200",
+  Cancelled: {
+    className:
+      "border-red-200 bg-red-50 text-[var(--danger)]",
+  },
 };
 
 function normalizeStatus(value) {
-  const status = String(value || "pending")
+  const normalizedStatus = String(
+    value || "pending"
+  )
     .trim()
     .toLowerCase();
 
@@ -48,12 +61,16 @@ function normalizeStatus(value) {
     pending: "Pending",
     confirmed: "Confirmed",
     approved: "Confirmed",
+    upcoming: "Confirmed",
     completed: "Completed",
     cancelled: "Cancelled",
     canceled: "Cancelled",
   };
 
-  return statusMap[status] || "Pending";
+  return (
+    statusMap[normalizedStatus] ||
+    "Pending"
+  );
 }
 
 function formatTime(value) {
@@ -70,7 +87,9 @@ function formatTime(value) {
     return time;
   }
 
-  const match = time.match(/^(\d{1,2}):(\d{2})/);
+  const match = time.match(
+    /^(\d{1,2}):(\d{2})/
+  );
 
   if (!match) {
     return time;
@@ -79,16 +98,41 @@ function formatTime(value) {
   const hour = Number(match[1]);
   const minute = match[2];
 
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12;
+  const period =
+    hour >= 12 ? "PM" : "AM";
 
-  return `${String(displayHour).padStart(
-    2,
-    "0"
-  )}:${minute} ${period}`;
+  const displayHour =
+    hour % 12 || 12;
+
+  return `${displayHour}:${minute} ${period}`;
 }
 
-function normalizeAppointment(appointment = {}) {
+function formatDate(value) {
+  if (!value) {
+    return "Date unavailable";
+  }
+
+  const date = new Date(value);
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-PK",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  ).format(date);
+}
+
+function normalizeAppointment(
+  appointment = {}
+) {
   return {
     ...appointment,
 
@@ -118,6 +162,12 @@ function normalizeAppointment(appointment = {}) {
       appointment.service ||
       "Healthcare Service",
 
+    date: formatDate(
+      appointment.appointment_date ||
+        appointment.appointmentDate ||
+        appointment.date
+    ),
+
     time: formatTime(
       appointment.appointment_time ||
         appointment.appointmentTime ||
@@ -128,6 +178,26 @@ function normalizeAppointment(appointment = {}) {
       appointment.status
     ),
   };
+}
+
+function normalizeAppointmentList(
+  payload = {}
+) {
+  const possibleLists = [
+    payload.recent_appointments,
+    payload.recentAppointments,
+    payload.appointments,
+    payload.data?.recent_appointments,
+    payload.data?.recentAppointments,
+  ];
+
+  const appointmentList =
+    possibleLists.find(Array.isArray) ||
+    [];
+
+  return appointmentList.map(
+    normalizeAppointment
+  );
 }
 
 function getErrorMessage(
@@ -145,11 +215,15 @@ function getErrorMessage(
 export default function Dashboard({
   onNavigate,
 }) {
-  const [dashboardData, setDashboardData] =
-    useState({
-      statistics: {},
-      recentAppointments: [],
-    });
+  const navigate = useNavigate();
+
+  const [
+    dashboardData,
+    setDashboardData,
+  ] = useState({
+    statistics: {},
+    recentAppointments: [],
+  });
 
   const [loading, setLoading] =
     useState(true);
@@ -160,138 +234,156 @@ export default function Dashboard({
   const [lastUpdated, setLastUpdated] =
     useState(null);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setPageError("");
+  const loadDashboard =
+    useCallback(async () => {
+      setLoading(true);
+      setPageError("");
 
-    try {
-      const response =
-        await getAdminDashboard();
+      try {
+        const response =
+          await getAdminDashboard();
 
-      const payload =
-        extractAdminDashboard(response);
+        const extractedPayload =
+          extractAdminDashboard(
+            response
+          );
 
-      const statistics =
-        payload?.statistics || {};
+        const payload =
+          extractedPayload &&
+          typeof extractedPayload ===
+            "object"
+            ? extractedPayload
+            : {};
 
-      const appointmentList =
-        Array.isArray(
-          payload?.recent_appointments
-        )
-          ? payload.recent_appointments
-          : Array.isArray(
-                payload?.recentAppointments
-              )
-            ? payload.recentAppointments
-            : [];
+        setDashboardData({
+          statistics:
+            payload.statistics ||
+            payload.stats ||
+            {},
 
-      setDashboardData({
-        statistics,
-        recentAppointments:
-          appointmentList.map(
-            normalizeAppointment
-          ),
-      });
+          recentAppointments:
+            normalizeAppointmentList(
+              payload
+            ),
+        });
 
-      setLastUpdated(new Date());
-    } catch (error) {
-      setPageError(
-        getErrorMessage(error)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setLastUpdated(new Date());
+      } catch (error) {
+        setDashboardData({
+          statistics: {},
+          recentAppointments: [],
+        });
+
+        setPageError(
+          getErrorMessage(error)
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, []);
 
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
 
-  const stats = useMemo(() => {
-    const statistics =
-      dashboardData.statistics;
+  const statistics =
+    dashboardData.statistics;
 
+  const dashboardStats = useMemo(() => {
     const totalPatients =
       Number(
         statistics.total_patients ??
-          statistics.totalPatients
+          statistics.totalPatients ??
+          statistics.patients
       ) || 0;
 
     const totalDoctors =
       Number(
         statistics.total_doctors ??
-          statistics.totalDoctors
+          statistics.totalDoctors ??
+          statistics.doctors
       ) || 0;
 
     const totalAppointments =
       Number(
         statistics.total_appointments ??
-          statistics.totalAppointments
+          statistics.totalAppointments ??
+          statistics.appointments
       ) || 0;
 
     const pendingAppointments =
       Number(
         statistics.pending_appointments ??
-          statistics.pendingAppointments
+          statistics.pendingAppointments ??
+          statistics.pending
       ) || 0;
 
     const confirmedAppointments =
       Number(
         statistics.confirmed_appointments ??
-          statistics.confirmedAppointments
+          statistics.confirmedAppointments ??
+          statistics.confirmed
       ) || 0;
 
-      const totalReviews =
+    const totalReviews =
       Number(
         statistics.total_reviews ??
-          statistics.totalReviews
+          statistics.totalReviews ??
+          statistics.reviews
       ) || 0;
-    
-    const averageRatingValue =
+
+    const rawAverageRating =
       statistics.average_rating ??
       statistics.averageRating ??
       statistics.avg_rating ??
-      statistics.avgRating;
-    
+      statistics.avgRating ??
+      0;
+
     const averageRating =
-      averageRatingValue !== undefined &&
-      averageRatingValue !== null &&
-      Number.isFinite(Number(averageRatingValue))
-        ? Number(averageRatingValue)
+      Number.isFinite(
+        Number(rawAverageRating)
+      )
+        ? Number(rawAverageRating)
         : 0;
-        console.log("Dashboard statistics:", statistics);
+
     return [
       {
         label: "Total Patients",
-        value: totalPatients.toLocaleString(),
-        delta: "Registered patients",
+        value:
+          totalPatients.toLocaleString(),
+        detail: "Registered patients",
         icon: Users,
-        accent: "bg-[#1565C0]",
+        variant: "primary",
       },
+
       {
         label: "Total Doctors",
-        value: totalDoctors.toLocaleString(),
-        delta: "Registered specialists",
+        value:
+          totalDoctors.toLocaleString(),
+        detail: "Registered specialists",
         icon: Stethoscope,
-        accent: "bg-[#2E7D32]",
+        variant: "success",
       },
+
       {
-        label: "Total Appointments",
+        label: "Appointments",
         value:
           totalAppointments.toLocaleString(),
-        delta: `${pendingAppointments} pending · ${confirmedAppointments} confirmed`,
+        detail: `${pendingAppointments} pending · ${confirmedAppointments} confirmed`,
         icon: CalendarCheck,
-        accent: "bg-[#1565C0]",
+        variant: "secondary",
       },
+
       {
-        label: "Avg. Rating",
-        value: averageRating.toFixed(1),
-        delta: `${totalReviews} reviews`,
+        label: "Average Rating",
+        value:
+          averageRating.toFixed(1),
+        detail: `${totalReviews.toLocaleString()} reviews`,
         icon: Star,
-        accent: "bg-[#2E7D32]",
+        variant: "warning",
       },
     ];
-  }, [dashboardData.statistics]);
+  }, [statistics]);
 
   const formattedLastUpdated =
     lastUpdated
@@ -304,256 +396,550 @@ export default function Dashboard({
         )
       : "Not updated";
 
+  const handleNavigate = (route) => {
+    if (
+      typeof onNavigate === "function"
+    ) {
+      onNavigate(route);
+      return;
+    }
+
+    navigate(`/admin/${route}`);
+  };
+
   return (
-    <div className="min-h-screen bg-[#F5F5F5] font-['Inter']">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#2E7D32]">
-              Hoku Health Care
-            </p>
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 12,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.3,
+      }}
+      className="min-w-0 space-y-5 sm:space-y-6"
+    >
+      {/* Dashboard header */}
+      <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-soft)]">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[var(--primary)] to-[#4f8ee8] px-5 py-6 sm:px-6 sm:py-7">
+          <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-white/10" />
 
-            <h1 className="font-['Poppins'] text-2xl font-bold text-[#1A1A2E] sm:text-3xl">
-              Admin Dashboard
-            </h1>
+          <div className="absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-[var(--secondary)]/20" />
 
-            <p className="mt-1 text-sm text-[#6B7280]">
-              Overview of patients, doctors,
-              appointments, and platform activity.
-            </p>
-          </div>
+          <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/75">
+                HOKU Health Care
+              </p>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-[#6B7280] shadow-sm ring-1 ring-black/5">
-              <Clock className="h-4 w-4 text-[#1565C0]" />
-              Updated {formattedLastUpdated}
+              <h1 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl">
+                Admin Dashboard
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80 sm:text-base">
+                Monitor patients, doctors,
+                appointments, reviews, and
+                recent platform activity.
+              </p>
             </div>
 
-            <button
-              type="button"
-              onClick={loadDashboard}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#1A1A2E] shadow-sm ring-1 ring-black/5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${
-                  loading
-                    ? "animate-spin"
-                    : ""
-                }`}
-              />
-              Refresh
-            </button>
-          </div>
-        </div>
+            <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+              <div className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-white/20 bg-white/10 px-4 text-sm font-medium text-white backdrop-blur-sm">
+                <Clock size={17} />
 
-        {pageError && (
-          <div className="mb-6 flex items-start justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{pageError}</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPageError("")}
-              aria-label="Dismiss error"
-              className="rounded p-1 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-            <LoaderCircle className="mb-3 h-8 w-8 animate-spin text-[#2E7D32]" />
-
-            <p className="text-sm font-medium text-[#1A1A2E]">
-              Loading dashboard...
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map(
-                ({
-                  label,
-                  value,
-                  delta,
-                  icon: Icon,
-                  accent,
-                }) => (
-                  <div
-                    key={label}
-                    className="rounded-2xl bg-white p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition hover:shadow-[0_6px_18px_rgba(0,0,0,0.12)]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${accent}`}
-                      >
-                        <Icon className="h-5 w-5 text-white" />
-                      </span>
-
-                      <TrendingUp className="h-4 w-4 text-[#2E7D32]" />
-                    </div>
-
-                    <p className="mt-4 font-['Poppins'] text-2xl font-bold text-[#1A1A2E]">
-                      {value}
-                    </p>
-
-                    <p className="text-sm text-[#6B7280]">
-                      {label}
-                    </p>
-
-                    <p className="mt-2 text-xs font-medium text-[#2E7D32]">
-                      {delta}
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-
-            <div className="mt-8 rounded-2xl bg-white p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] sm:p-6">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-['Poppins'] text-lg font-semibold text-[#1A1A2E]">
-                    Recent Appointments
-                  </h2>
-
-                  <p className="text-sm text-[#6B7280]">
-                    Latest bookings across all
-                    doctors
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    onNavigate?.(
-                      "appointments"
-                    )
-                  }
-                  className="flex items-center justify-center gap-1 rounded-lg bg-[#2E7D32] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1B5E20]"
-                >
-                  View all
-                  <ArrowUpRight className="h-4 w-4" />
-                </button>
+                Updated{" "}
+                {formattedLastUpdated}
               </div>
 
-              {dashboardData.recentAppointments
-                .length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-14 text-center">
-                  <CalendarCheck className="mb-3 h-8 w-8 text-[#6B7280]" />
+              <button
+                type="button"
+                onClick={loadDashboard}
+                disabled={loading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-white px-5 text-sm font-semibold text-[var(--primary)] shadow-sm transition hover:bg-[var(--primary-light)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw
+                  size={17}
+                  className={
+                    loading
+                      ? "animate-spin"
+                      : ""
+                  }
+                />
 
-                  <p className="font-medium text-[#1A1A2E]">
-                    No recent appointments
-                  </p>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                  <p className="mt-1 text-sm text-[#6B7280]">
-                    New appointments will appear
-                    here.
-                  </p>
+      {pageError && (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-[var(--radius-lg)] border border-red-200 bg-red-50 p-4 text-sm text-[var(--danger)]"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <AlertCircle
+              size={18}
+              className="mt-0.5 shrink-0"
+            />
+
+            <div className="min-w-0">
+              <p className="font-semibold">
+                Dashboard could not be loaded
+              </p>
+
+              <p className="mt-1 break-words leading-6">
+                {pageError}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              setPageError("")
+            }
+            aria-label="Dismiss error"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] transition hover:bg-red-100"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {loading ? (
+        <DashboardLoading />
+      ) : (
+        <>
+          {/* Statistics */}
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardStats.map(
+              (stat, index) => (
+                <DashboardStatCard
+                  key={stat.label}
+                  stat={stat}
+                  index={index}
+                />
+              )
+            )}
+          </section>
+
+          {/* Recent appointments */}
+          <section className="min-w-0 overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-soft)]">
+            <div className="flex flex-col gap-4 border-b border-[var(--border)] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--primary)]">
+                  Platform Activity
+                </p>
+
+                <h2 className="mt-1 font-heading text-lg font-bold text-[var(--heading)]">
+                  Recent Appointments
+                </h2>
+
+                <p className="mt-1 text-sm text-[var(--body)]">
+                  Latest patient bookings
+                  across all registered doctors.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleNavigate(
+                    "appointments"
+                  )
+                }
+                className="inline-flex min-h-10 w-full shrink-0 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--primary-hover)] sm:w-auto"
+              >
+                View all
+
+                <ArrowUpRight
+                  size={17}
+                />
+              </button>
+            </div>
+
+            {dashboardData
+              .recentAppointments.length ===
+            0 ? (
+              <EmptyAppointments />
+            ) : (
+              <>
+                {/* Mobile cards */}
+                <div className="space-y-3 p-4 lg:hidden">
+                  {dashboardData.recentAppointments.map(
+                    (
+                      appointment,
+                      index
+                    ) => (
+                      <MobileAppointmentCard
+                        key={
+                          appointment.id ??
+                          index
+                        }
+                        appointment={
+                          appointment
+                        }
+                      />
+                    )
+                  )}
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left text-sm">
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto lg:block">
+                  <table className="w-full min-w-[820px] text-left">
                     <thead>
-                      <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-[#6B7280]">
-                        <th className="py-3 font-medium">
+                      <tr className="border-b border-[var(--border)] bg-[var(--section)]">
+                        <TableHeading>
                           Patient
-                        </th>
+                        </TableHeading>
 
-                        <th className="py-3 font-medium">
+                        <TableHeading>
                           Doctor
-                        </th>
+                        </TableHeading>
 
-                        <th className="py-3 font-medium">
+                        <TableHeading>
                           Service
-                        </th>
+                        </TableHeading>
 
-                        <th className="py-3 font-medium">
+                        <TableHeading>
+                          Date
+                        </TableHeading>
+
+                        <TableHeading>
                           Time
-                        </th>
+                        </TableHeading>
 
-                        <th className="py-3 font-medium">
+                        <TableHeading>
                           Status
-                        </th>
-
-                        <th className="py-3 font-medium" />
+                        </TableHeading>
                       </tr>
                     </thead>
 
                     <tbody>
                       {dashboardData.recentAppointments.map(
-                        (appointment, index) => {
-                          const style =
-                            statusStyles[
-                              appointment.status
-                            ] ||
-                            statusStyles.Pending;
+                        (
+                          appointment,
+                          index
+                        ) => (
+                          <tr
+                            key={
+                              appointment.id ??
+                              index
+                            }
+                            className="border-b border-[var(--border)] transition last:border-0 hover:bg-[var(--section)]"
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <PatientInitial
+                                  name={
+                                    appointment.patient
+                                  }
+                                />
 
-                          return (
-                            <tr
-                              key={
-                                appointment.id ??
-                                index
-                              }
-                              className="border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5]/60"
-                            >
-                              <td className="py-3 font-medium text-[#1A1A2E]">
-                                {
-                                  appointment.patient
-                                }
-                              </td>
-
-                              <td className="py-3 text-[#6B7280]">
-                                {
-                                  appointment.doctor
-                                }
-                              </td>
-
-                              <td className="py-3 text-[#6B7280]">
-                                {
-                                  appointment.service
-                                }
-                              </td>
-
-                              <td className="py-3 text-[#6B7280]">
-                                {appointment.time}
-                              </td>
-
-                              <td className="py-3">
-                                <span
-                                  className={`rounded-full px-3 py-1 text-xs font-medium ${style}`}
-                                >
+                                <span className="font-semibold text-[var(--heading)]">
                                   {
-                                    appointment.status
+                                    appointment.patient
                                   }
                                 </span>
-                              </td>
+                              </div>
+                            </TableCell>
 
-                              <td className="py-3 text-right">
-                                <button
-                                  type="button"
-                                  aria-label={`Appointment ${appointment.id}`}
-                                  className="rounded-lg p-1.5 text-[#6B7280] hover:bg-gray-100"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        }
+                            <TableCell>
+                              {
+                                appointment.doctor
+                              }
+                            </TableCell>
+
+                            <TableCell>
+                              {
+                                appointment.service
+                              }
+                            </TableCell>
+
+                            <TableCell>
+                              {
+                                appointment.date
+                              }
+                            </TableCell>
+
+                            <TableCell>
+                              {
+                                appointment.time
+                              }
+                            </TableCell>
+
+                            <TableCell>
+                              <StatusBadge
+                                status={
+                                  appointment.status
+                                }
+                              />
+                            </TableCell>
+                          </tr>
+                        )
                       )}
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
-          </>
-        )}
+              </>
+            )}
+          </section>
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+function DashboardStatCard({
+  stat,
+  index,
+}) {
+  const {
+    label,
+    value,
+    detail,
+    icon: Icon,
+    variant,
+  } = stat;
+
+  const variants = {
+    primary: {
+      iconClass:
+        "bg-[var(--primary-light)] text-[var(--primary)]",
+
+      accentClass:
+        "bg-[var(--primary)]",
+    },
+
+    success: {
+      iconClass:
+        "bg-green-50 text-[var(--success)]",
+
+      accentClass:
+        "bg-[var(--success)]",
+    },
+
+    secondary: {
+      iconClass:
+        "bg-[var(--secondary-light)] text-[var(--secondary-hover)]",
+
+      accentClass:
+        "bg-[var(--secondary)]",
+    },
+
+    warning: {
+      iconClass:
+        "bg-amber-50 text-[var(--warning)]",
+
+      accentClass:
+        "bg-[var(--warning)]",
+    },
+  };
+
+  const selectedVariant =
+    variants[variant] ||
+    variants.primary;
+
+  return (
+    <motion.article
+      initial={{
+        opacity: 0,
+        y: 10,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.25,
+        delay: index * 0.05,
+      }}
+      className="relative min-w-0 overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
+    >
+      <span
+        className={`absolute inset-y-0 left-0 w-1 ${selectedVariant.accentClass}`}
+      />
+
+      <div className="flex items-start justify-between gap-4">
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-lg)] ${selectedVariant.iconClass}`}
+        >
+          <Icon size={21} />
+        </div>
+
+        <TrendingUp
+          size={17}
+          className="text-[var(--success)]"
+        />
       </div>
+
+      <p className="mt-5 font-heading text-2xl font-bold text-[var(--heading)] sm:text-3xl">
+        {value}
+      </p>
+
+      <p className="mt-1 text-sm font-semibold text-[var(--heading)]">
+        {label}
+      </p>
+
+      <p className="mt-2 truncate text-xs text-[var(--body)]">
+        {detail}
+      </p>
+    </motion.article>
+  );
+}
+
+function MobileAppointmentCard({
+  appointment,
+}) {
+  return (
+    <article className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--section)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <PatientInitial
+            name={appointment.patient}
+          />
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[var(--heading)]">
+              {appointment.patient}
+            </p>
+
+            <p className="mt-1 truncate text-xs text-[var(--body)]">
+              {appointment.service}
+            </p>
+          </div>
+        </div>
+
+        <StatusBadge
+          status={appointment.status}
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <MobileDetail
+          label="Doctor"
+          value={appointment.doctor}
+        />
+
+        <MobileDetail
+          label="Date"
+          value={appointment.date}
+        />
+
+        <MobileDetail
+          label="Time"
+          value={appointment.time}
+        />
+      </div>
+    </article>
+  );
+}
+
+function MobileDetail({
+  label,
+  value,
+}) {
+  return (
+    <div className="min-w-0 rounded-[var(--radius-md)] bg-[var(--card)] px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+        {label}
+      </p>
+
+      <p className="mt-1 truncate text-xs font-semibold text-[var(--heading)]">
+        {value}
+      </p>
     </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const config =
+    statusConfig[status] ||
+    statusConfig.Pending;
+
+  return (
+    <span
+      className={`inline-flex w-fit shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-semibold leading-none ${config.className}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function PatientInitial({ name }) {
+  const initial = String(
+    name || "Patient"
+  )
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-light)] font-heading text-sm font-bold text-[var(--primary)]">
+      {initial || "P"}
+    </div>
+  );
+}
+
+function TableHeading({ children }) {
+  return (
+    <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+      {children}
+    </th>
+  );
+}
+
+function TableCell({ children }) {
+  return (
+    <td className="px-5 py-4 text-sm text-[var(--body)]">
+      {children}
+    </td>
+  );
+}
+
+function EmptyAppointments() {
+  return (
+    <div className="px-5 py-14 text-center sm:px-6">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary-light)] text-[var(--primary)]">
+        <CalendarCheck size={24} />
+      </div>
+
+      <h3 className="mt-4 font-heading text-base font-bold text-[var(--heading)]">
+        No recent appointments
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--body)]">
+        New patient appointments will
+        appear here when bookings are
+        created.
+      </p>
+    </div>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <section
+      role="status"
+      className="flex min-h-[420px] items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-soft)]"
+    >
+      <div className="text-center">
+        <LoaderCircle className="mx-auto h-9 w-9 animate-spin text-[var(--primary)]" />
+
+        <p className="mt-4 font-heading text-sm font-bold text-[var(--heading)]">
+          Loading Admin Dashboard
+        </p>
+
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Preparing platform statistics
+          and appointments.
+        </p>
+      </div>
+    </section>
   );
 }

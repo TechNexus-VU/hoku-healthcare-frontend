@@ -1,10 +1,86 @@
-import api from './api';
+import api from "./api";
 
-export const getDashboardData = () => api.get('/doctors/dashboard');
-export const getAppointments = () => api.get('/doctors/appointments');
-export const updateAppointment = (id, payload) => api.put(`/doctors/appointments/${id}`, payload);
-export const getPatients = () => api.get('/doctors/patients');
-export const getPatientById = (id) => api.get(`/doctors/patients/${id}`);
-export const updateAvailability = (payload) => api.put('/doctors/availability', payload);
-export const getProfile = () => api.get('/doctors/profile');
-export const updateProfile = (payload) => api.put('/doctors/profile', payload);
+/* Doctor dashboard */
+export const getDashboardData = () =>
+  api.get("/doctor/dashboard");
+
+/* Doctor appointments */
+export const getAppointments = (
+  params = {}
+) =>
+  api.get("/doctor/appointments", {
+    params,
+  });
+
+export const getAppointmentById = (
+  appointmentId
+) =>
+  api.get(
+    `/doctor/appointments/${appointmentId}`
+  );
+
+export const updateAppointment = (
+  appointmentId,
+  payload
+) => {
+  const status =
+    typeof payload === "string"
+      ? payload
+      : payload?.status;
+
+  return api.put(
+    `/doctor/appointments/${appointmentId}/status`,
+    {
+      status,
+    }
+  );
+};
+
+/* Doctor patients */
+export const getPatients = (
+  params = {}
+) =>
+  api.get("/doctor/patients", {
+    params,
+  });
+
+export const getPatientById = (
+  patientId
+) =>
+  api.get(
+    `/doctor/patients/${patientId}`
+  );
+
+export const getPatientAppointments = (
+  patientId
+) =>
+  api.get(
+    `/doctor/patients/${patientId}/appointments`
+  );
+
+/* Doctor availability */
+export const getAvailability = () =>
+  api.get("/doctor/availability");
+
+export const updateAvailability = (
+  availability
+) =>
+  api.put("/doctor/availability", {
+    availability,
+  });
+
+/* Doctor profile */
+export const getProfile = () =>
+  api.get("/doctor/profile");
+
+export const updateProfile = (
+  payload
+) =>
+  api.put("/doctor/profile", payload);
+
+
+export const registerDoctor = (payload) =>
+  api.post("/auth/register/doctor", payload);
+
+export const loginDoctor = (credentials) =>
+  api.post("/auth/login", credentials);
